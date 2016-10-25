@@ -39,27 +39,74 @@ const LINE_DISTANCE_SCALE = 1 / 2;
 // The maximum line distance, in tile units, that fits in the buffer.
 const MAX_LINE_DISTANCE = Math.pow(2, LINE_DISTANCE_BUFFER_BITS - 1) / LINE_DISTANCE_SCALE;
 
-const lineInterface = {
-    layoutVertexArrayType: createVertexArrayType([{
-        name: 'a_pos',
-        components: 2,
-        type: 'Int16'
-    }, {
-        name: 'a_data',
-        components: 4,
-        type: 'Uint8'
-    }]),
-    paintAttributes: [{
-        name: 'a_color',
-        components: 4,
-        type: 'Uint8',
-        getValue: (layer, globalProperties, featureProperties) => {
-            return layer.getPaintValue("line-color", globalProperties, featureProperties);
-        },
-        multiplier: 255,
-        paintProperty: 'line-color'
-    }],
-    elementArrayType: createElementArrayType()
+const lineInterfaces = {
+    line: {
+        layoutVertexArrayType: new VertexArrayType([{
+            name: 'a_pos',
+            components: 2,
+            type: 'Int16'
+        }, {
+            name: 'a_data',
+            components: 4,
+            type: 'Uint8'
+        }]),
+        paintAttributes: [{
+            name: 'a_color',
+            components: 4,
+            type: 'Uint8',
+            getValue: (layer, globalProperties, featureProperties) => {
+                return layer.getPaintValue("line-color", globalProperties, featureProperties);
+            },
+            multiplier: 255,
+            paintProperty: 'line-color'
+        }, {
+            name: 'a_blur',
+            components: 1,
+            type: 'Uint8',
+            getValue: function(layer, globalProperties, featureProperties) {
+                return [layer.getPaintValue("line-blur", globalProperties, featureProperties)];
+            },
+            multiplier: 10,
+            paintProperty: 'line-blur'
+        }, {
+            name: 'a_opacity',
+            components: 1,
+            type: 'Uint8',
+            getValue: function(layer, globalProperties, featureProperties) {
+                return [layer.getPaintValue("line-opacity", globalProperties, featureProperties)];
+            },
+            multiplier: 10,
+            paintProperty: 'line-opacity'
+        }, {
+            name: 'a_width',
+            components: 1,
+            type: 'Uint8',
+            getValue: function(layer, globalProperties, featureProperties) {
+                return [layer.getPaintValue("line-width", globalProperties, featureProperties) / 2];
+            },
+            multiplier: 10,
+            paintProperty: 'line-width'
+        }, {
+            name: 'a_gapwidth',
+            components: 1,
+            type: 'Uint8',
+            getValue: function(layer, globalProperties, featureProperties) {
+                return [layer.getPaintValue("line-gap-width", globalProperties, featureProperties) / 2];
+            },
+            multiplier: 10,
+            paintProperty: 'line-gap-width'
+        }, {
+            name: 'a_offset',
+            components: 1,
+            type: 'Uint8',
+            getValue: function(layer, globalProperties, featureProperties) {
+                return [-1 * layer.getPaintValue("line-offset", globalProperties, featureProperties)];
+            },
+            multiplier: 10,
+            paintProperty: 'line-offset'
+        }],
+        elementArrayType: createElementArrayType()
+    }
 };
 
 function addLineVertex(layoutVertexBuffer, point, extrude, tx, ty, dir, linesofar) {
