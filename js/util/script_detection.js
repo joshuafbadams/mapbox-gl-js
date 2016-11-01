@@ -46,8 +46,9 @@ module.exports.charAllowsIdeographicBreaking = function(char) {
 };
 
 function charAllowsVerticalWritingMode(char) {
-    // Return early for characters outside all ideographic ranges.
-    if (char < 0x2E80) return false;
+    // Return early for characters outside all ranges that allow the vertical
+    // writing mode.
+    if (char < 0x1100) return false;
 
     if (isChar['Bopomofo Extended'](char)) return true;
     if (isChar['Bopomofo'](char)) return true;
