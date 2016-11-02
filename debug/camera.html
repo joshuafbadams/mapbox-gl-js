@@ -50,9 +50,12 @@
 <!--     <button id="fitBoundsNone">fitBounds [none]</button>
     <button id="fitBoundsEase">fitBounds [ease]</button>
     <button id="fitBoundsFly">fitBounds [fly]</button> -->
-    <button id="moveToNone">setCamera [none]</button>
-    <button id="moveToEase">setCamera [ease]</button>
-    <button id="moveToFly">setCamera [fly]</button>
+    <button id="setCameraNone">setCamera [none]</button>
+    <button id="setCameraEase">setCamera [ease]</button>
+    <button id="setCameraFly">setCamera [fly]</button>
+    <button id="setCameraBounds">setCamera [replace fitBounds]</button>
+    <button id="panTo">panTo</button>
+    <button id="getCamera">getCamera [log to console]</button>
 </div>
 
 <div id='buffer' style="display:none">
@@ -75,63 +78,31 @@ map.addControl(new mapboxgl.NavigationControl());
 map.addControl(new mapboxgl.GeolocateControl());
 map.addControl(new mapboxgl.ScaleControl());
 
-map.on('load', function() {
-    map.addSource('geojson', {
-        "type": "geojson",
-        "data": "/node_modules/mapbox-gl-test-suite/data/linestring.geojson"
-    });
-
-    map.addLayer({
-        "id": "route",
-        "type": "line",
-        "source": "geojson",
-        "paint": {
-            "line-color": "#EC8D8D",
-            "line-width": {
-                "base": 1.5,
-                "stops": [
-                    [
-                        5,
-                        0.75
-                    ],
-                    [
-                        18,
-                        32
-                    ]
-                ]
-            }
-        }
-    }, 'country-label-lg');
-});
-
-var sw = new mapboxgl.LngLat(-73.9876, 40.7661);
-var ne = new mapboxgl.LngLat(-73.9397, 40.8002);
-var llb = new mapboxgl.LngLatBounds(sw, ne);
-
-// document.getElementById('fitBoundsNone').onclick = function() {
-//     map.fitBounds(llb, { animationType: 'none' });
-// };
-
-// document.getElementById('fitBoundsEase').onclick = function() {
-//     map.fitBounds(llb, { animationType: 'ease' });
-// };
-
-// document.getElementById('fitBoundsFly').onclick = function() {
-//     map.fitBounds(llb, { animationType: 'fly' });
-// };
-
 var MSP = [-93.27180839989352, 44.9676697084098];
 
-document.getElementById('moveToNone').onclick = function() {
+document.getElementById('setCameraNone').onclick = function() {
     map.setCamera({ center: MSP }, { type: 'none' });
 };
 
-document.getElementById('moveToEase').onclick = function() {
+document.getElementById('setCameraEase').onclick = function() {
     map.setCamera({ center: MSP }, { type: 'ease' });
 };
 
-document.getElementById('moveToFly').onclick = function() {
+document.getElementById('setCameraFly').onclick = function() {
     map.setCamera({ center: MSP }, { type: 'fly' });
+};
+
+document.getElementById('setCameraBounds').onclick = function() {
+    var bounds = [[-93.07408655538306, 44.925490471831495], [-93.04896352361918, 44.94316162786302]];
+    map.setCamera({ bounds: bounds }, { type: 'ease' });
+};
+
+document.getElementById('panTo').onclick = function() {
+    map.panTo(MSP);
+};
+
+document.getElementById('getCamera').onclick = function() {
+    console.log(map.getCamera());
 };
 </script>
 

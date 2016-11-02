@@ -197,7 +197,7 @@ class Map extends Camera {
 
         this.on('style.load', function() {
             if (this.transform.unmodified) {
-                this.jumpTo(this.style.stylesheet);
+                this.setCamera(this.style.stylesheet);
             }
             this.style.update(this._classes, {transition: false});
         });
