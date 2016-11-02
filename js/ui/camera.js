@@ -98,10 +98,10 @@ class Camera extends Evented {
      * @fires moveend
      * @returns {Map} `this`
      */
-    panTo(lnglat, options, eventData) {
-        return this.setCamera(util.extend({
+    panTo(lnglat, animationOptions, eventData) {
+        return this.setCamera({
             center: lnglat
-        }, options), {type: 'ease'}, eventData);
+        }, util.extend({type: 'ease'}, animationOptions), eventData);
     }
 
     /**
@@ -149,10 +149,10 @@ class Camera extends Evented {
      * @fires zoomend
      * @returns {Map} `this`
      */
-    zoomTo(zoom, options, eventData) {
-        return this.setCamera(util.extend({
+    zoomTo(zoom, animationOptions, eventData) {
+        return this.setCamera({
             zoom: zoom
-        }, options), {type: 'ease'}, eventData);
+        }, util.extend({type: 'ease'}, animationOptions), eventData);
     }
 
     /**
@@ -169,8 +169,8 @@ class Camera extends Evented {
      * @fires zoomend
      * @returns {Map} `this`
      */
-    zoomIn(options, eventData) {
-        this.zoomTo(this.getZoom() + 1, options, eventData);
+    zoomIn(animationOptions, eventData) {
+        this.zoomTo(this.getZoom() + 1, animationOptions, eventData);
         return this;
     }
 
@@ -188,8 +188,8 @@ class Camera extends Evented {
      * @fires zoomend
      * @returns {Map} `this`
      */
-    zoomOut(options, eventData) {
-        this.zoomTo(this.getZoom() - 1, options, eventData);
+    zoomOut(animationOptions, eventData) {
+        this.zoomTo(this.getZoom() - 1, animationOptions, eventData);
         return this;
     }
 
@@ -376,30 +376,25 @@ class Camera extends Evented {
         animationOptions.type = animationOptions.type || 'none';
         cameraOptions = cameraOptions.bounds ? this._optionsFromBounds(cameraOptions) : this._defaultCameraOptions(cameraOptions);
 
-        // get animation options
-        var options = util.extend(animationOptions, cameraOptions);
-
-        switch(options.type) {
+        switch(animationOptions.type) {
             case 'fly':
-                options = util.extend({
-                    offset: [0, 0],
+                animationOptions = util.extend({
                     speed: 1.2,
                     curve: 1.42,
                     easing: util.ease
-                }, options);
-                this._animateFly(options, eventData);
+                }, animationOptions);
+                this._animateFly(cameraOptions, animationOptions, eventData);
                 break;
             case 'ease':
-                options = util.extend({
-                    offset: [0, 0],
+                animationOptions = util.extend({
                     duration: 500,
                     easing: util.ease
-                }, options);
-                this._animateEase(options, eventData);
+                }, animationOptions);
+                this._animateEase(cameraOptions, animationOptions, eventData);
                 break;
             case 'none':
             default:
-                this._animateNone(options, eventData);
+                this._animateNone(cameraOptions, eventData);
                 break;
         }        
 
@@ -425,30 +420,30 @@ class Camera extends Evented {
      * @fires moveend
      * @returns {Map} `this`
      */
-    _animateNone(options, eventData) {
+    _animateNone(cameraOptions, eventData) {
 
         const tr = this.transform;
         let zoomChanged = false,
             bearingChanged = false,
             pitchChanged = false;
 
-        if ('zoom' in options && tr.zoom !== +options.zoom) {
+        if ('zoom' in cameraOptions && tr.zoom !== +cameraOptions.zoom) {
             zoomChanged = true;
-            tr.zoom = +options.zoom;
+            tr.zoom = +cameraOptions.zoom;
         }
 
-        if ('center' in options) {
-            tr.center = LngLat.convert(options.center);
+        if ('center' in cameraOptions) {
+            tr.center = LngLat.convert(cameraOptions.center);
         }
 
-        if ('bearing' in options && tr.bearing !== +options.bearing) {
+        if ('bearing' in cameraOptions && tr.bearing !== +cameraOptions.bearing) {
             bearingChanged = true;
-            tr.bearing = +options.bearing;
+            tr.bearing = +cameraOptions.bearing;
         }
 
-        if ('pitch' in options && tr.pitch !== +options.pitch) {
+        if ('pitch' in cameraOptions && tr.pitch !== +cameraOptions.pitch) {
             pitchChanged = true;
-            tr.pitch = +options.pitch;
+            tr.pitch = +cameraOptions.pitch;
         }
 
         this.fire('movestart', eventData)
@@ -477,7 +472,8 @@ class Camera extends Evented {
      * details not specified in `options`.
      *
      * @memberof Map#
-     * @param {CameraOptions|AnimationOptions} options Options describing the destination and animation of the transition.
+     * @param {CameraOptions|} cameraOptions Options describing the destination.
+     * @param {AnimationOptions} animationOptions Options describing the animation of the transition.
      * @param {Object} [eventData] Data to propagate to any event listeners.
      * @fires movestart
      * @fires zoomstart
@@ -490,26 +486,26 @@ class Camera extends Evented {
      * @returns {Map} `this`
      * @see [Navigate the map with game-like controls](https://www.mapbox.com/mapbox-gl-js/example/game-controls/)
      */
-    _animateEase(options, eventData) {
+    _animateEase(cameraOptions, animationOptions, eventData) {
 
         const tr = this.transform,
-            offset = Point.convert(options.offset),
+            offset = Point.convert(cameraOptions.offset),
             startZoom = this.getZoom(),
             startBearing = this.getBearing(),
             startPitch = this.getPitch(),
 
-            zoom = 'zoom' in options ? +options.zoom : startZoom,
-            bearing = 'bearing' in options ? this._normalizeBearing(options.bearing, startBearing) : startBearing,
-            pitch = 'pitch' in options ? +options.pitch : startPitch;
+            zoom = 'zoom' in cameraOptions ? +cameraOptions.zoom : startZoom,
+            bearing = 'bearing' in cameraOptions ? this._normalizeBearing(cameraOptions.bearing, startBearing) : startBearing,
+            pitch = 'pitch' in cameraOptions ? +cameraOptions.pitch : startPitch;
 
         let toLngLat,
             toPoint;
 
-        if ('center' in options) {
-            toLngLat = LngLat.convert(options.center);
+        if ('center' in cameraOptions) {
+            toLngLat = LngLat.convert(cameraOptions.center);
             toPoint = tr.centerPoint.add(offset);
-        } else if ('around' in options) {
-            toLngLat = LngLat.convert(options.around);
+        } else if ('around' in cameraOptions) {
+            toLngLat = LngLat.convert(cameraOptions.around);
             toPoint = tr.locationPoint(toLngLat);
         } else {
             toPoint = tr.centerPoint.add(offset);
@@ -518,17 +514,17 @@ class Camera extends Evented {
 
         const fromPoint = tr.locationPoint(toLngLat);
 
-        if (options.animate === false) options.duration = 0;
+        if (animationOptions.animate === false) animationOptions.duration = 0;
 
         this.zooming = (zoom !== startZoom);
         this.rotating = (startBearing !== bearing);
         this.pitching = (pitch !== startPitch);
 
-        if (options.smoothEasing && options.duration !== 0) {
-            options.easing = this._smoothOutEasing(options.duration);
+        if (animationOptions.smoothEasing && animationOptions.duration !== 0) {
+            animationOptions.easing = this._smoothOutEasing(animationOptions.duration);
         }
 
-        if (!options.noMoveStart) {
+        if (!animationOptions.noMoveStart) {
             this.fire('movestart', eventData);
         }
         if (this.zooming) {
@@ -563,12 +559,12 @@ class Camera extends Evented {
                 this.fire('pitch', eventData);
             }
         }, () => {
-            if (options.delayEndEvents) {
-                this._onEaseEnd = setTimeout(this._easeToEnd.bind(this, eventData), options.delayEndEvents);
+            if (animationOptions.delayEndEvents) {
+                this._onEaseEnd = setTimeout(this._easeToEnd.bind(this, eventData), animationOptions.delayEndEvents);
             } else {
                 this._easeToEnd(eventData);
             }
-        }, options);
+        }, animationOptions);
 
         return this;
     }
@@ -638,7 +634,7 @@ class Camera extends Evented {
      * @see [Slowly fly to a location](https://www.mapbox.com/mapbox-gl-js/example/flyto-options/)
      * @see [Fly to a location based on scroll position](https://www.mapbox.com/mapbox-gl-js/example/scroll-fly-to/)
      */
-    _animateFly(options, eventData) {
+    _animateFly(cameraOptions, animationOptions, eventData) {
         // This method implements an “optimal path” animation, as detailed in:
         //
         // Van Wijk, Jarke J.; Nuij, Wim A. A. “Smooth and efficient zooming and panning.” INFOVIS
@@ -648,15 +644,15 @@ class Camera extends Evented {
         // function in van Wijk (2003).
         console.log('we are flyin!');
         const tr = this.transform,
-            offset = Point.convert(options.offset),
+            offset = Point.convert(cameraOptions.offset),
             startZoom = this.getZoom(),
             startBearing = this.getBearing(),
             startPitch = this.getPitch();
 
-        const center = 'center' in options ? LngLat.convert(options.center) : this.getCenter();
-        const zoom = 'zoom' in options ?  +options.zoom : startZoom;
-        const bearing = 'bearing' in options ? this._normalizeBearing(options.bearing, startBearing) : startBearing;
-        const pitch = 'pitch' in options ? +options.pitch : startPitch;
+        const center = 'center' in cameraOptions ? LngLat.convert(cameraOptions.center) : this.getCenter();
+        const zoom = 'zoom' in cameraOptions ?  +cameraOptions.zoom : startZoom;
+        const bearing = 'bearing' in cameraOptions ? this._normalizeBearing(cameraOptions.bearing, startBearing) : startBearing;
+        const pitch = 'pitch' in cameraOptions ? +cameraOptions.pitch : startPitch;
 
         // If a path crossing the antimeridian would be shorter, extend the final coordinate so that
         // interpolating between the two endpoints will cross it.
@@ -670,10 +666,10 @@ class Camera extends Evented {
 
         const scale = tr.zoomScale(zoom - startZoom),
             from = tr.point,
-            to = 'center' in options ? tr.project(center).sub(offset.div(scale)) : from;
+            to = 'center' in cameraOptions ? tr.project(center).sub(offset.div(scale)) : from;
 
         const startWorldSize = tr.worldSize;
-        let rho = options.curve;
+        let rho = animationOptions.curve;
 
             // w₀: Initial visible span, measured in pixels at the initial scale.
         const w0 = Math.max(tr.width, tr.height),
@@ -683,8 +679,8 @@ class Camera extends Evented {
             // the world image origin at the initial scale.
             u1 = to.sub(from).mag();
 
-        if ('minZoom' in options) {
-            const minZoom = util.clamp(Math.min(options.minZoom, startZoom, zoom), tr.minZoom, tr.maxZoom);
+        if ('minZoom' in animationOptions) {
+            const minZoom = util.clamp(Math.min(animationOptions.minZoom, startZoom, zoom), tr.minZoom, tr.maxZoom);
             // w<sub>m</sub>: Maximum visible span, measured in pixels with respect to the initial
             // scale.
             const wMax = w0 / tr.zoomScale(minZoom - startZoom);
@@ -731,7 +727,7 @@ class Camera extends Evented {
         // When u₀ = u₁, the optimal path doesn’t require both ascent and descent.
         if (Math.abs(u1) < 0.000001) {
             // Perform a more or less instantaneous transition if the path is too short.
-            if (Math.abs(w0 - w1) < 0.000001) return this.setCamera(options, {type: 'ease'}); // TODO: this creates an endless loop
+            if (Math.abs(w0 - w1) < 0.000001) return this.setCamera(cameraOptions, util.extend({type: 'ease'}, animationOptions)); // TODO: this creates an endless loop
 
             const k = w1 < w0 ? -1 : 1;
             S = Math.abs(Math.log(w1 / w0)) / rho;
@@ -740,11 +736,11 @@ class Camera extends Evented {
             w = function(s) { return Math.exp(k * rho * s); };
         }
 
-        if ('duration' in options) {
-            options.duration = +options.duration;
+        if ('duration' in animationOptions) {
+            animationOptions.duration = +animationOptions.duration;
         } else {
-            const V = 'screenSpeed' in options ? +options.screenSpeed / rho : +options.speed;
-            options.duration = 1000 * S / V;
+            const V = 'screenSpeed' in animationOptions ? +animationOptions.screenSpeed / rho : +animationOptions.speed;
+            animationOptions.duration = 1000 * S / V;
         }
 
         this.zooming = true;
@@ -784,7 +780,7 @@ class Camera extends Evented {
 
             this.fire('zoomend', eventData);
             this.fire('moveend', eventData);
-        }, options);
+        }, animationOptions);
 
         return this;
     }
@@ -807,14 +803,14 @@ class Camera extends Evented {
         return this;
     }
 
-    _ease(frame, finish, options) {
+    _ease(frame, finish, animationOptions) {
         this._finishFn = finish;
         this._abortFn = browser.timed(function (t) {
-            frame.call(this, options.easing(t));
+            frame.call(this, animationOptions.easing(t));
             if (t === 1) {
                 this._finishEase();
             }
-        }, options.animate === false ? 0 : options.duration, this);
+        }, animationOptions.animate === false ? 0 : animationOptions.duration, this);
     }
 
     _finishEase() {
