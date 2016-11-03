@@ -20,7 +20,6 @@ const Evented = require('../util/evented');
  * @property {number} bearing The destination's bearing (rotation), measured in degrees counter-clockwise from north.
  * @property {number} pitch The destination's pitch (tilt), measured in degrees.
  * @property {LngLatLike} around If a `zoom` is specified, `around` determines the zoom center (defaults to the center of the map).
- * @property {LngLatBoundsLike} bounds The bounds to fit the visible area into. If this is set, `zoom` is ignored.
  */
 
 /**
@@ -71,47 +70,6 @@ class Camera extends Evented {
     }
 
     /**
-     * Pans the map by the specified offest.
-     *
-     * @memberof Map#
-     * @param {Array<number>} offset `x` and `y` coordinates by which to pan the map.
-     * @param {AnimationOptions} [options]
-     * @param {Object} [eventData] Data to propagate to any event listeners.
-     * @fires movestart
-     * @fires moveend
-     * @returns {Map} `this`
-     * @see [Navigate the map with game-like controls](https://www.mapbox.com/mapbox-gl-js/example/game-controls/)
-     */
-    panBy(offset, animationOptions, eventData) {
-        this.panTo(
-            this.transform.center, 
-            { offset: Point.convert(offset).mult(-1) },
-            util.extend({ type: 'ease' }, animationOptions),
-            eventData
-        );
-        return this;
-    }
-
-    /**
-     * Pans the map to the specified location, with an animated transition.
-     *
-     * @memberof Map#
-     * @param {LngLatLike} lnglat The location to pan the map to.
-     * @param {AnimationOptions} [options]
-     * @param {Object} [eventData] Data to propagate to any event listeners.
-     * @fires movestart
-     * @fires moveend
-     * @returns {Map} `this`
-     */
-    panTo(lnglat, cameraOptions, animationOptions, eventData) {
-        return this.setCamera(
-            util.extend({ center: lnglat }, cameraOptions),
-            util.extend({ type: 'ease'}, animationOptions), 
-            eventData
-        );
-    }
-
-    /**
      * Returns the map's current zoom level.
      *
      * @memberof Map#
@@ -138,65 +96,6 @@ class Camera extends Evented {
      */
     setZoom(zoom, eventData) {
         this.setCamera({zoom: zoom}, {type: 'none'}, eventData);
-        return this;
-    }
-
-    /**
-     * Zooms the map to the specified zoom level, with an animated transition.
-     *
-     * @memberof Map#
-     * @param {number} zoom The zoom level to transition to.
-     * @param {AnimationOptions} [options]
-     * @param {Object} [eventData] Data to propagate to any event listeners.
-     * @fires movestart
-     * @fires zoomstart
-     * @fires move
-     * @fires zoom
-     * @fires moveend
-     * @fires zoomend
-     * @returns {Map} `this`
-     */
-    zoomTo(zoom, animationOptions, eventData) {
-        return this.setCamera({
-            zoom: zoom
-        }, util.extend({type: 'ease'}, animationOptions), eventData);
-    }
-
-    /**
-     * Increases the map's zoom level by 1.
-     *
-     * @memberof Map#
-     * @param {AnimationOptions} [options]
-     * @param {Object} [eventData] Data to propagate to any event listeners.
-     * @fires movestart
-     * @fires zoomstart
-     * @fires move
-     * @fires zoom
-     * @fires moveend
-     * @fires zoomend
-     * @returns {Map} `this`
-     */
-    zoomIn(animationOptions, eventData) {
-        this.zoomTo(this.getZoom() + 1, animationOptions, eventData);
-        return this;
-    }
-
-    /**
-     * Decreases the map's zoom level by 1.
-     *
-     * @memberof Map#
-     * @param {AnimationOptions} [options]
-     * @param {Object} [eventData] Data to propagate to any event listeners.
-     * @fires movestart
-     * @fires zoomstart
-     * @fires move
-     * @fires zoom
-     * @fires moveend
-     * @fires zoomend
-     * @returns {Map} `this`
-     */
-    zoomOut(animationOptions, eventData) {
-        this.zoomTo(this.getZoom() - 1, animationOptions, eventData);
         return this;
     }
 
@@ -228,55 +127,6 @@ class Camera extends Evented {
     }
 
     /**
-     * Rotates the map to the specified bearing, with an animated transition.
-     *
-     * @memberof Map#
-     * @param {number} bearing The bearing to rotate the map to, measured in degrees counter-clockwise from north.
-     * @param {AnimationOptions} [options]
-     * @param {Object} [eventData] Data to propagate to any event listeners.
-     * @fires movestart
-     * @fires moveend
-     * @returns {Map} `this`
-     */
-    rotateTo(bearing, options, eventData) {
-        return this.setCamera(util.extend({
-            bearing: bearing
-        }, options), {type: 'ease'}, eventData);
-    }
-
-    /**
-     * Rotates the map to a bearing of 0 (due north), with an animated transition.
-     *
-     * @memberof Map#
-     * @param {AnimationOptions} [options]
-     * @param {Object} [eventData] Data to propagate to any event listeners.
-     * @fires movestart
-     * @fires moveend
-     * @returns {Map} `this`
-     */
-    resetNorth(options, eventData) {
-        this.rotateTo(0, util.extend({duration: 1000}, options), eventData);
-        return this;
-    }
-
-    /**
-     * Snaps the map's bearing to 0 (due north), if the current bearing is close enough to it (i.e. within the `bearingSnap` threshold).
-     *
-     * @memberof Map#
-     * @param {AnimationOptions} [options]
-     * @param {Object} [eventData] Data to propagate to any event listeners.
-     * @fires movestart
-     * @fires moveend
-     * @returns {Map} `this`
-     */
-    snapToNorth(options, eventData) {
-        if (Math.abs(this.getBearing()) < this._bearingSnap) {
-            return this.resetNorth(options, eventData);
-        }
-        return this;
-    }
-
-    /**
      * Returns the map's current pitch (tilt).
      *
      * @memberof Map#
@@ -295,8 +145,94 @@ class Camera extends Evented {
      * @returns {Map} `this`
      */
     setPitch(pitch, eventData) {
-        this.jumpTo({pitch: pitch}, eventData);
+        this.setCamera({pitch: pitch}, {type: 'none'}, eventData);
         return this;
+    }
+
+    /**
+     * Generates a CameraOptions object based on geometry input. Typically used in conjuction with
+     * {@link Map#setCamera} to interpolate the zoom level based on a bounding box input.
+     * 
+     * @memberof Map#
+     * @param {LngLatBoundsLike} bounds Bounding box to fit within the camera state.
+     * @param {CameraOptions} [options]
+     * @param {number} [options.bearing] The destination's bearing (rotation), measured in degrees counter-clockwise from north.
+     * @param {number} [options.pitch] The destination's pitch (tilt), measured in degrees.
+     * @param {PointLike} [options.offset=[0,0]] The center of the given bounds relative to the map's center, measured in pixels.
+     * @param {number} [options.padding=0] The amount of padding, in pixels, to allow around the specified bounds.
+     * @param {number} [options.maxZoom] The maximum zoom level to allow when the map view transitions to the specified bounds.
+     * @returns {CameraOptions} CameraOptions An extended `CameraOptions` object
+     * @example
+     * // pass in a bounding box, specify bearing north
+     * var options = map.cameraForBounds([[32.958984, -5.353521 ], [43.50585, 5.615985]], {bearing: 0});
+     *
+     * map.setCamera(options);
+     */
+    cameraForBounds(bounds, cameraOptions) {
+    /* alternative names */
+    // optionsFromBounds
+    // cameraOptionsFromGeometry
+    // cameraOptionsFor
+    // generateCameraOptions
+        cameraOptions = util.extend({
+            padding: 0,
+            offset: [0, 0]
+        }, cameraOptions);
+        
+        bounds = LngLatBounds.convert(bounds);
+        
+        const offset = Point.convert(cameraOptions.offset),
+            tr = this.transform,
+            nw = tr.project(bounds.getNorthWest()),
+            se = tr.project(bounds.getSouthEast()),
+            size = se.sub(nw),
+            scaleX = (tr.width - cameraOptions.padding * 2 - Math.abs(offset.x) * 2) / size.x,
+            scaleY = (tr.height - cameraOptions.padding * 2 - Math.abs(offset.y) * 2) / size.y;
+
+        cameraOptions.center = tr.unproject(nw.add(se).div(2));
+        cameraOptions.zoom = Math.min(tr.scaleZoom(tr.scale * Math.min(scaleX, scaleY)), cameraOptions.maxZoom);
+        cameraOptions.bearing = 0;
+
+        return cameraOptions;
+    }
+
+    /**
+     * Returns the map's geographical bounds.
+     *
+     * @memberof Map#
+     * @returns {LngLatBounds} The map's geographical bounds.
+     */
+    getBounds() {
+        const bounds = new LngLatBounds(
+            this.transform.pointLocation(new Point(0, this.transform.height)),
+            this.transform.pointLocation(new Point(this.transform.width, 0)));
+
+        if (this.transform.angle || this.transform.pitch) {
+            bounds.extend(this.transform.pointLocation(new Point(this.transform.size.x, 0)));
+            bounds.extend(this.transform.pointLocation(new Point(0, this.transform.size.y)));
+        }
+
+        return bounds;
+    }
+
+    /**
+     * Moves and zooms the map to contain its visible area within the specified geographical bounds.
+     * This is a wrapper around {@link Map#cameraForBounds} and {@link Map#setCamera}.
+     *
+     * @memberof Map#
+     * @param {LngLatBoundsLike} bounds The bounds to fit the visible area into.
+     * @param {CameraOptions} cameraOptions With additional options `padding`, `offset`, and `maxZoom`.
+     * @param {PointLike} [cameraOptions.offset=[0,0]] The center of the given bounds relative to the map's center, measured in pixels.
+     * @param {number} [cameraOptions.padding=0] The amount of padding, in pixels, to allow around the specified bounds.
+     * @param {number} [cameraOptions.maxZoom=Infinity] The maximum zoom level to allow when the map view transitions to the specified bounds.
+     * @param {AnimationOptions} [animationOptions] `zoom` will be ignored.
+     * @param {Object} [eventData] Data to propagate to any event listeners.
+     */
+    fitBounds(bounds, cameraOptions, animationOptions, eventData) {
+        animationOptions = util.extend({
+            type: 'none'
+        }, animationOptions);
+        this.setCamera(this.cameraForBounds(bounds, cameraOptions), animationOptions, eventData);
     }
 
     /**
@@ -305,7 +241,8 @@ class Camera extends Evented {
      * details not specified in `options`.
      *
      * @memberof Map#
-     * @param {CameraOptions} options
+     * @param {CameraOptions} cameraOptions
+     * @param {AnimationOptions} animationOptions
      * @param {Object} [eventData] Data to propagate to any event listeners.
      * @fires movestart
      * @fires zoomstart
@@ -320,9 +257,13 @@ class Camera extends Evented {
     setCamera(cameraOptions, animationOptions, eventData) {
         this.stop();
 
-        // get camera options
-        animationOptions.type = animationOptions.type || 'none';
-        cameraOptions = cameraOptions.bounds ? this._optionsFromBounds(cameraOptions) : this._defaultCameraOptions(cameraOptions);
+        animationOptions = util.extend({
+            type: 'none',
+        }, animationOptions);
+
+        cameraOptions = util.extend({
+            offset: [0 ,0]
+        }, cameraOptions);
 
         switch(animationOptions.type) {
             case 'fly':
@@ -344,12 +285,13 @@ class Camera extends Evented {
             default:
                 this._animateNone(cameraOptions, eventData);
                 break;
-        }        
-
+        }
     }
 
     /**
-     * Returns the camera's current state
+     * Returns the camera's current state: `center`, `zoom`, `bearing`, `pitch`, and `bounds`.
+     *
+     * @returns {object} state The value of each {@link CameraOptions} value, plus the bounds ({@LngLatBounds}) of the current camera view.
      *
      */
     getCamera() {
@@ -362,10 +304,42 @@ class Camera extends Evented {
         };
     }
 
+    /**
+     * Pans the map by the specified offest.
+     *
+     * @memberof Map#
+     * @param {Array<number>} offset `x` and `y` coordinates by which to pan the map.
+     * @param {AnimationOptions} [options]
+     * @param {Object} [eventData] Data to propagate to any event listeners.
+     * @fires movestart
+     * @fires moveend
+     * @returns {Map} `this`
+     * @see [Navigate the map with game-like controls](https://www.mapbox.com/mapbox-gl-js/example/game-controls/)
+     */
+    panBy(offset, animationOptions, eventData) {
+        this.setCamera({
+            offset: Point.convert(offset).mult(-1),
+            center: this.transform.center
+        }, util.extend({ type: 'ease' }, animationOptions), eventData );
+        return this;
+    }
+
+    /**
+     * Stops any animated transition underway.
+     *
+     * @memberof Map#
+     * @returns {Map} `this`
+     */
+    stop() {
+        if (this._abortFn) {
+            this._abortFn();
+            this._finishEase();
+        }
+        return this;
+    }
 
     // no animation, just update the camera and events (this is the default animation for setCamera)
     _animateNone(cameraOptions, eventData) {
-
         const tr = this.transform;
         let zoomChanged = false,
             bearingChanged = false,
@@ -662,50 +636,7 @@ class Camera extends Evented {
         return !!this._abortFn;
     }
 
-    /**
-     * Stops any animated transition underway.
-     *
-     * @memberof Map#
-     * @returns {Map} `this`
-     */
-    stop() {
-        if (this._abortFn) {
-            this._abortFn();
-            this._finishEase();
-        }
-        return this;
-    }
-
     // used to calculate camera options based on a LatLngBounds object
-    _optionsFromBounds(cameraOptions) {
-        cameraOptions = util.extend({
-            padding: 0,
-            offset: [0, 0],
-            maxZoom: Infinity
-        }, cameraOptions);
-
-        const bounds = LngLatBounds.convert(cameraOptions.bounds);
-
-        const offset = Point.convert(cameraOptions.offset),
-            tr = this.transform,
-            nw = tr.project(bounds.getNorthWest()),
-            se = tr.project(bounds.getSouthEast()),
-            size = se.sub(nw),
-            scaleX = (tr.width - cameraOptions.padding * 2 - Math.abs(offset.x) * 2) / size.x,
-            scaleY = (tr.height - cameraOptions.padding * 2 - Math.abs(offset.y) * 2) / size.y;
-
-        cameraOptions.center = tr.unproject(nw.add(se).div(2));
-        cameraOptions.zoom = Math.min(tr.scaleZoom(tr.scale * Math.min(scaleX, scaleY)), cameraOptions.maxZoom);
-        cameraOptions.bearing = 0;
-        return cameraOptions;
-    }
-
-    // default camera options
-    _defaultCameraOptions(cameraOptions) {
-        return cameraOptions = util.extend({
-            offset: [0 ,0]
-        }, cameraOptions);
-    }
 
     _ease(frame, finish, animationOptions) {
         this._finishFn = finish;

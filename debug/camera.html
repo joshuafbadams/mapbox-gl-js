@@ -53,9 +53,9 @@
     <button id="setCameraNone">setCamera [none]</button>
     <button id="setCameraEase">setCamera [ease]</button>
     <button id="setCameraFly">setCamera [fly]</button>
-    <button id="setCameraBounds">setCamera [replace fitBounds]</button>
-    <button id="panTo">panTo</button>
+    <button id="panBy">panBy</button>
     <button id="getCamera">getCamera [log to console]</button>
+    <button id="fitBounds">fitBounds [none]</button>
 </div>
 
 <div id='buffer' style="display:none">
@@ -79,6 +79,7 @@ map.addControl(new mapboxgl.GeolocateControl());
 map.addControl(new mapboxgl.ScaleControl());
 
 var MSP = [-93.27180839989352, 44.9676697084098];
+var bounds = [[-93.07408655538306, 44.925490471831495], [-93.04896352361918, 44.94316162786302]];
 
 document.getElementById('setCameraNone').onclick = function() {
     map.setCamera({ center: MSP }, { type: 'none' });
@@ -92,17 +93,16 @@ document.getElementById('setCameraFly').onclick = function() {
     map.setCamera({ center: MSP }, { type: 'fly' });
 };
 
-document.getElementById('setCameraBounds').onclick = function() {
-    var bounds = [[-93.07408655538306, 44.925490471831495], [-93.04896352361918, 44.94316162786302]];
-    map.setCamera({ bounds: bounds }, { type: 'ease' });
-};
-
-document.getElementById('panTo').onclick = function() {
-    map.panTo(MSP);
+document.getElementById('panBy').onclick = function() {
+    map.panBy(MSP);
 };
 
 document.getElementById('getCamera').onclick = function() {
     console.log(map.getCamera());
+};
+
+document.getElementById('fitBounds').onclick = function() {
+    map.fitBounds(bounds);
 };
 </script>
 

@@ -135,9 +135,12 @@ class ScrollZoomHandler {
         const fromScale = map.ease ? map.ease.to : map.transform.scale,
             targetZoom = map.transform.scaleZoom(fromScale * scale);
 
-        map.zoomTo(targetZoom, {
+        map.setCamera({
+            zoom: targetZoom,
+            around: map.unproject(this._pos)
+        }, {
+            type: 'ease',
             duration: this._type === 'wheel' ? 200 : 0,
-            around: map.unproject(this._pos),
             delayEndEvents: 200,
             smoothEasing: true
         }, { originalEvent: e });

@@ -328,24 +328,6 @@ class Map extends Camera {
     }
 
     /**
-     * Returns the map's geographical bounds.
-     *
-     * @returns {LngLatBounds} The map's geographical bounds.
-     */
-    getBounds() {
-        const bounds = new LngLatBounds(
-            this.transform.pointLocation(new Point(0, this.transform.height)),
-            this.transform.pointLocation(new Point(this.transform.width, 0)));
-
-        if (this.transform.angle || this.transform.pitch) {
-            bounds.extend(this.transform.pointLocation(new Point(this.transform.size.x, 0)));
-            bounds.extend(this.transform.pointLocation(new Point(0, this.transform.size.y)));
-        }
-
-        return bounds;
-    }
-
-    /**
      * Sets or clears the map's geographical bounds.
      *
      * Pan and zoom operations are constrained within these bounds.
