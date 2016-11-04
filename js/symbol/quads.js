@@ -177,7 +177,7 @@ function getGlyphQuads(anchor, shaping, boxScale, line, layer, alongLine) {
             x2 = x1 + rect.w,
             y2 = y1 + rect.h,
 
-            center = new Point((x1 + x2) / 2, (y1 + y2) / 2),
+            center = new Point((x1 + x2) / 2, 0),
 
             otl = new Point(x1, y1).sub(center).rotate(positionedGlyph.angle).add(center),
             otr = new Point(x2, y1).sub(center).rotate(positionedGlyph.angle).add(center),

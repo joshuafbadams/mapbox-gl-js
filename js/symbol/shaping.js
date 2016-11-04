@@ -1,6 +1,9 @@
 'use strict';
 
 const scriptDetection = require('../util/script_detection');
+const verticalizePunctuation = require('../util/verticalize_punctuation');
+const isCharInUnicodeBlock = require('../util/is_char_in_unicode_block');
+
 
 const WritingMode = {
     horizontal: 1,
@@ -38,6 +41,9 @@ const newLine = 0x0a;
 
 function shapeText(text, glyphs, maxWidth, lineHeight, horizontalAlign, verticalAlign, justify, spacing, translate, verticalHeight, writingMode) {
 
+    text = text.trim();
+    if (writingMode === WritingMode.vertical) text = verticalizePunctuation(text);
+
     const positionedGlyphs = [];
     const shaping = new Shaping(positionedGlyphs, text, translate[1], translate[1], translate[0], translate[0], writingMode);
 
@@ -46,27 +52,18 @@ function shapeText(text, glyphs, maxWidth, lineHeight, horizontalAlign, vertical
 
     let x = 0;
 
-    text = text.trim();
-
     for (let i = 0; i < text.length; i++) {
         const codePoint = text.charCodeAt(i);
         const glyph = glyphs[codePoint];
 
         if (!glyph && codePoint !== newLine) continue;
 
-        if (!scriptDetection.charAllowsVerticalWritingMode(text[i]) || writingMode === WritingMode.horizontal) {
+        if (!scriptDetection.charAllowsVerticalWritingMode(codePoint) || writingMode === WritingMode.horizontal) {
             positionedGlyphs.push(new PositionedGlyph(codePoint, x, yOffset, glyph, 0));
             if (glyph) x += glyph.advance + spacing;
 
-        } else if (writingMode === WritingMode.vertical) {
-            positionedGlyphs.push(new PositionedGlyph(
-                codePoint,
-                x,
-                glyph.rect && glyph.rect.h / 2 - 32,
-                glyph,
-                -Math.PI / 2
-            ));
-
+        } else {
+            positionedGlyphs.push(new PositionedGlyph(codePoint, x, yOffset, glyph, -Math.PI / 2));
             if (glyph) x += verticalHeight + spacing;
         }
     }

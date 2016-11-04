@@ -45,7 +45,7 @@ module.exports.charAllowsIdeographicBreaking = function(char) {
     return false;
 };
 
-exports.charAllowsVerticalWritingMode = function(char) {
+exports.charAllowsVerticalWritingMode = function(char, includeNeutrals) {
     // Return early for characters outside all ranges that allow the vertical
     // writing mode.
     if (char < 0x1100) return false;
@@ -75,6 +75,10 @@ exports.charAllowsVerticalWritingMode = function(char) {
     if (isChar['Vertical Forms'](char)) return true;
 
     if (isCharFullwidthForm(char)) return true;
+
+    if (includeNeutrals) {
+        if (isChar['General Punctuation'](char)) return true;
+    }
 
     return false;
 }

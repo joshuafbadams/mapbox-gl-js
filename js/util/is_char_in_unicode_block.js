@@ -71,7 +71,7 @@ module.exports = {
     // 'Combining Diacritical Marks Supplement': (char) => char >= 0x1DC0 && char <= 0x1DFF,
     // 'Latin Extended Additional': (char) => char >= 0x1E00 && char <= 0x1EFF,
     // 'Greek Extended': (char) => char >= 0x1F00 && char <= 0x1FFF,
-    // 'General Punctuation': (char) => char >= 0x2000 && char <= 0x206F,
+    'General Punctuation': (char) => char >= 0x2000 && char <= 0x206F,
     // 'Superscripts and Subscripts': (char) => char >= 0x2070 && char <= 0x209F,
     // 'Currency Symbols': (char) => char >= 0x20A0 && char <= 0x20CF,
     // 'Combining Diacritical Marks for Symbols': (char) => char >= 0x20D0 && char <= 0x20FF,
