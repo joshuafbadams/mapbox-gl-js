@@ -54,7 +54,7 @@ function shapeText(text, glyphs, maxWidth, lineHeight, horizontalAlign, vertical
 
         if (!glyph && codePoint !== newLine) continue;
 
-        if (writingMode === WritingMode.horizontal) {
+        if (!scriptDetection.charAllowsVerticalWritingMode(text[i]) || writingMode === WritingMode.horizontal) {
             positionedGlyphs.push(new PositionedGlyph(codePoint, x, yOffset, glyph, 0));
             if (glyph) x += glyph.advance + spacing;
 

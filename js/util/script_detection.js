@@ -12,7 +12,7 @@ module.exports.allowsIdeographicBreaking = function(chars) {
 
 module.exports.allowsVerticalWritingMode = function(chars) {
     for (const char of chars) {
-        if (charAllowsVerticalWritingMode(char.charCodeAt(0))) return true;
+        if (exports.charAllowsVerticalWritingMode(char.charCodeAt(0))) return true;
     }
     return false;
 };
@@ -45,7 +45,7 @@ module.exports.charAllowsIdeographicBreaking = function(char) {
     return false;
 };
 
-function charAllowsVerticalWritingMode(char) {
+exports.charAllowsVerticalWritingMode = function(char) {
     // Return early for characters outside all ranges that allow the vertical
     // writing mode.
     if (char < 0x1100) return false;
